@@ -1,6 +1,6 @@
 [target.armv7-unknown-linux-gnueabihf]
 pre-build = [
     "dpkg --add-architecture $CROSS_DEB_ARCH",
-    "apt-get update && apt-get install --assume-yes libudev-dev:$CROSS_DEB_ARCH libinput-dev:$CROSS_DEB_ARCH libdrm-dev:$CROSS_DEB_ARCH libgbm-dev:$CROSS_DEB_ARCH fonts-dejavu-core fontconfig",
+    "apt-get update && apt-get install --assume-yes libudev-dev:$CROSS_DEB_ARCH libinput-dev:$CROSS_DEB_ARCH libdrm-dev:$CROSS_DEB_ARCH libgbm-dev:$CROSS_DEB_ARCH libxkbcommon-dev:$CROSS_DEB_ARCH fonts-dejavu-core fontconfig",
     "fc-cache -fv",
 ]
