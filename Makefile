@@ -1,5 +1,5 @@
 BINARY    := vector-screen
-TARGET    := armv7-unknown-linux-gnueabihf
+TARGET    := armv7-unknown-linux-musleabihf
 PREFIX    ?= /usr/local
 BINDIR    := $(PREFIX)/bin
 SYSTEMD   := /etc/systemd/system

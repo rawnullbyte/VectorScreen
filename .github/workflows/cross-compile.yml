@@ -16,7 +16,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: armv7-unknown-linux-gnueabihf
+          targets: armv7-unknown-linux-musleabihf
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
@@ -40,11 +40,11 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build release binary for ARM
-        run: cross build --release --target armv7-unknown-linux-gnueabihf
+        run: cross build --release --target armv7-unknown-linux-musleabihf
 
       - name: Upload ARM binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: vector-screen-armv7l
-          path: target/armv7-unknown-linux-gnueabihf/release/vector-screen
+          path: target/armv7-unknown-linux-musleabihf/release/vector-screen
           if-no-files-found: error

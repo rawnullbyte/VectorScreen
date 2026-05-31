@@ -9,7 +9,7 @@ echo "Installing Vector Screen..."
 
 # Copy binary
 echo "  Copying binary to /usr/local/bin/"
-cp "target/armv7-unknown-linux-gnueabihf/release/$BINARY" "/usr/local/bin/$BINARY"
+cp "target/armv7-unknown-linux-musleabihf/release/$BINARY" "/usr/local/bin/$BINARY"
 chmod +x "/usr/local/bin/$BINARY"
 
 # Copy config if not present

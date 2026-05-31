@@ -38,9 +38,15 @@ SetLedBrightness(u8),
     RunShaperCalibration,
     RefreshWifiNetworks,
     DisconnectWifi,
-    ConnectWifi { ssid: String, password: String
-},
+    ConnectWifi { ssid: String, password: String },
+    SetPressureAdvance(f64),
+    SetMaxVelocity { x: f64, y: f64, z: f64 },
+    SetMaxAcceleration { x: f64, y: f64, z: f64 },
+    SetSquareCornerVelocity(f64),
+    StartTouchCal,
 }
+
+
 
 fn main() -> Result<(), slint::PlatformError> {
     let app_config = config::Config::load();

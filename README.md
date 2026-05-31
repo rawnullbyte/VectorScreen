@@ -21,10 +21,10 @@ VectorScreen connects to [Moonraker](https://moonraker.readthedocs.io/) (the Kli
 - **ARM cross-compiler** (for target builds):
   ```bash
   # Debian/Ubuntu
-  sudo apt install gcc-arm-linux-gnueabihf
+  sudo apt install musl-tools
 
   # Arch
-  sudo pacman -S arm-linux-gnueabihf-gcc
+  sudo pacman -S musl
   ```
 - **Moonraker** running on the printer (default port 7125)
 - **Klipper** firmware on the printer
@@ -44,10 +44,10 @@ cargo build
 ```bash
 make release
 # or
-cargo build --release --target armv7-unknown-linux-gnueabihf
+cargo build --release --target armv7-unknown-linux-musleabihf
 ```
 
-The ARM binary is at `target/armv7-unknown-linux-gnueabihf/release/vector-screen`.
+The ARM binary is at `target/armv7-unknown-linux-musleabihf/release/vector-screen`.
 
 ### Run tests
 
@@ -66,7 +66,7 @@ make check
 ### Copy binary to target device
 
 ```bash
-scp target/armv7-unknown-linux-gnueabihf/release/vector-screen \
+scp target/armv7-unknown-linux-musleabihf/release/vector-screen \
     user@printer-ip:/usr/local/bin/vector-screen
 ```
 
