@@ -1,0 +1,34 @@
+import { Theme } from "../theme.slint";
+
+export component Thumbnail inherits Rectangle {
+    // ── Properties ──
+    in property <bool> has-thumbnail: false;
+    in property <string> placeholder-icon: "📄";
+    in property <image> thumbnail-source: @image-url("");
+    in property <length> thumbnail-width: 64px;
+    in property <length> thumbnail-height: 64px;
+
+    // ── Styling ──
+    width: thumbnail-width;
+    height: thumbnail-height;
+    background: Theme.bg-tertiary;
+    border-radius: Theme.radius-md;
+    clip: true;
+
+    // ── Thumbnail Image ──
+    if root.has-thumbnail: Image {
+        source: root.thumbnail-source;
+        width: root.thumbnail-width;
+        height: root.thumbnail-height;
+        image-fit: contain;
+    }
+
+    // ── Placeholder Icon ──
+    if !root.has-thumbnail: Text {
+        text: root.placeholder-icon;
+        color: Theme.text-secondary;
+        font-size: Theme.font-lg;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

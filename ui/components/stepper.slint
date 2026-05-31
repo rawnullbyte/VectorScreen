@@ -1,0 +1,120 @@
+import { Theme } from "../theme.slint";
+
+export component Stepper {
+    // ── Properties ──
+    in property <float> value: 0;
+    in property <float> min: 0;
+    in property <float> max: 100;
+    in property <float> step: 1;
+    in property <string> label: "";
+
+    // ── Callbacks ──
+    callback value-changed(float);
+    callback increment();
+    callback decrement();
+
+    // ── Internal State ──
+    property <bool> can-decrement: root.value > root.min;
+    property <bool> can-increment: root.value < root.max;
+
+    // ── Layout ──
+    VerticalLayout {
+        spacing: Theme.spacing-xs;
+
+        // Label
+        Text {
+            text: root.label;
+            color: Theme.text-secondary;
+            font-size: Theme.font-sm;
+        }
+
+        // Controls Row
+        HorizontalLayout {
+            spacing: Theme.spacing-sm;
+
+            // Decrement Button [-]
+            decrem-btn := Rectangle {
+                height: 40px;
+                width: 40px;
+                border-radius: Theme.radius-md;
+                background: decrem-touch.has-hover ? Theme.bg-tertiary : Theme.bg-secondary;
+                border-width: 0px;
+                border-color: Theme.border-default;
+                opacity: root.can-decrement ? 1.0 : 0.5;
+
+                Text {
+                    text: "−";
+                    color: Theme.text-primary;
+                    font-size: Theme.font-lg;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                decrem-touch := TouchArea {
+                    enabled: root.can-decrement;
+                    clicked => {
+                        root.value = max(root.value - root.step, root.min);
+                        root.decrement();
+                        root.value-changed(root.value);
+                    }
+                }
+
+                Rectangle {
+                    visible: decrem-touch.pressed;
+                    background: black.with-alpha(0.15);
+                    border-radius: Theme.radius-md;
+                }
+            }
+
+            // Value Display
+            Rectangle {
+                horizontal-stretch: 1;
+                height: 40px;
+                border-radius: Theme.radius-md;
+                background: Theme.bg-tertiary;
+
+                Text {
+                    text: round(root.value * 10) / 10;
+                    color: Theme.text-primary;
+                    font-size: Theme.font-md;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Increment Button [+]
+            increm-btn := Rectangle {
+                height: 40px;
+                width: 40px;
+                border-radius: Theme.radius-md;
+                background: increm-touch.has-hover ? Theme.bg-tertiary : Theme.bg-secondary;
+                border-width: 0px;
+                border-color: Theme.border-default;
+                opacity: root.can-increment ? 1.0 : 0.5;
+
+                Text {
+                    text: "+";
+                    color: Theme.text-primary;
+                    font-size: Theme.font-lg;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                increm-touch := TouchArea {
+                    enabled: root.can-increment;
+                    clicked => {
+                        root.value = min(root.value + root.step, root.max);
+                        root.increment();
+                        root.value-changed(root.value);
+                    }
+                }
+
+                Rectangle {
+                    visible: increm-touch.pressed;
+                    background: black.with-alpha(0.15);
+                    border-radius: Theme.radius-md;
+                }
+            }
+        }
+    }
+}

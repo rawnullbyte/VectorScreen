@@ -1,0 +1,21 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+import { Button } from "../components/button.slint";
+
+export component TouchCalScreen {
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "Touch Calibration";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: "Tap the corners to calibrate";
+            font-size: Theme.font-md;
+            color: Theme.text-secondary;
+        }
+    }
+}

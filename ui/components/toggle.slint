@@ -1,0 +1,33 @@
+import { Theme } from "../theme.slint";
+
+export component Toggle inherits Rectangle {
+    // ── Properties ──
+    in-out property <bool> active: false;
+
+    // ── Dimensions ──
+    width: 48px;
+    height: 24px;
+
+    // ── Track ──
+    background: root.active ? Theme.accent-blue : Theme.bg-tertiary;
+    border-radius: Theme.radius-lg;
+    border-width: 1px;
+    border-color: Theme.border-default;
+
+    // ── Thumb ──
+    thumb := Rectangle {
+        x: root.active ? parent.width - self.width - 2px : 2px;
+        y: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: Theme.radius-sm;
+        background: root.active ? Theme.text-primary : Theme.text-muted;
+    }
+
+    // ── Touch Area ──
+    touch-area := TouchArea {
+        clicked => {
+            root.active = !root.active;
+        }
+    }
+}

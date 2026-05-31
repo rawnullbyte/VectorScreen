@@ -1,0 +1,17 @@
+[Unit]
+Description=Vector Screen - Touch UI for FlashForge Adventurer 5M
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/vector-screen
+WorkingDirectory=/home/root
+Restart=on-failure
+RestartSec=5
+User=root
+Group=root
+Environment=RUST_LOG=info
+EnvironmentFile=-/etc/default/vector-screen
+
+[Install]
+WantedBy=multi-user.target

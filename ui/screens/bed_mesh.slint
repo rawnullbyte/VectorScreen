@@ -1,0 +1,40 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+import { Button } from "../components/button.slint";
+
+export component BedMeshScreen {
+    in property <int> grid-size: 5;
+    in property <[float]> mesh-values: [];
+    in property <float> mesh-min: 0.0;
+    in property <float> mesh-max: 0.0;
+    in property <float> mesh-average: 0.0;
+
+    callback calibrate-mesh();
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "Bed Mesh";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: "Grid: " + grid-size + "x" + grid-size;
+            font-size: Theme.font-md;
+            color: Theme.text-secondary;
+        }
+
+        Label {
+            text: "Min: " + mesh-min + " Max: " + mesh-max + " Avg: " + mesh-average;
+            font-size: Theme.font-sm;
+            color: Theme.text-secondary;
+        }
+
+        Button {
+            label: "Calibrate";
+            clicked => { root.calibrate-mesh(); }
+        }
+    }
+}

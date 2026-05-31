@@ -1,0 +1,917 @@
+import { Theme } from "../theme.slint";
+import { Button } from "../components/button.slint";
+import { Card } from "../components/card.slint";
+import { Label } from "../components/label.slint";
+import { Toggle } from "../components/toggle.slint";
+
+export component ControlsScreen inherits Rectangle {
+    // ── Properties ──
+    in property <string> extruder-temp: "0";
+    in property <float> extruder-target: 0;
+    in property <string> bed-temp: "0";
+    in property <float> bed-target: 0;
+    in property <string> pos-x: "0.0";
+    in property <string> pos-y: "0.0";
+    in property <string> pos-z: "0.0";
+
+    // ── Callbacks ──
+    callback emergency-stop();
+    callback load-filament();
+    callback unload-filament();
+    callback set-extruder-temp(float);
+    callback set-bed-temp(float);
+    callback home-all();
+    callback home-x();
+    callback home-y();
+    callback home-z();
+    callback set-speed-slow();
+    callback set-speed-medium();
+    callback set-speed-fast();
+    callback move-x-10-neg();
+    callback move-x-1-neg();
+    callback move-x-1-pos();
+    callback move-x-10-pos();
+    callback move-y-10-neg();
+    callback move-y-1-neg();
+    callback move-y-1-pos();
+    callback move-y-10-pos();
+    callback move-z-10-neg();
+    callback move-z-1-neg();
+    callback move-z-1-pos();
+    callback move-z-10-pos();
+    // ── LED Properties ──
+    in-out property <bool> led-active: false;
+    in-out property <int> led-brightness: 50;
+
+    // ── LED Callbacks ──
+    callback toggle-led();
+    callback set-led-brightness(int);
+
+    // ── Layout ──
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+        padding: Theme.spacing-md;
+
+        // ── Emergency Stop ──
+        Rectangle {
+            height: 80px;
+            border-radius: Theme.radius-lg;
+            background: estop-touch.has-hover
+                ? Theme.accent-red.with-alpha(0.85)
+                : Theme.accent-red;
+
+            Text {
+                text: "EMERGENCY STOP";
+                color: Theme.text-primary;
+                font-size: Theme.font-xl;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            Rectangle {
+                visible: estop-touch.pressed;
+                background: black.with-alpha(0.2);
+                border-radius: Theme.radius-lg;
+            }
+
+            estop-touch := TouchArea {
+                clicked => { root.emergency-stop(); }
+            }
+        }
+
+        // ── Filament Management ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Filament";
+                    heading: true;
+                }
+
+                Button {
+                    label: "Load Filament";
+                    primary: true;
+                    clicked => { root.load-filament(); }
+                }
+
+                Button {
+                    label: "Unload Filament";
+                    clicked => { root.unload-filament(); }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    Label {
+                        text: "Extruder:";
+                        muted: true;
+                    }
+
+                    Label {
+                        text: root.extruder-temp + "\u{00b0}C";
+                    }
+                }
+            }
+        }
+
+        // ── Thermal Control ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Thermal";
+                    heading: true;
+                }
+
+                // ── Extruder Temperature ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "Extruder:";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: ext-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: ext-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            ext-minus-touch := TouchArea {
+                                clicked => { root.set-extruder-temp(root.extruder-target - 10); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.extruder-target + "\u{00b0}C";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: ext-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: ext-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            ext-plus-touch := TouchArea {
+                                clicked => { root.set-extruder-temp(root.extruder-target + 10); }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                // ── Bed Temperature ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "Bed:";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: bed-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: bed-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            bed-minus-touch := TouchArea {
+                                clicked => { root.set-bed-temp(root.bed-target - 10); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.bed-target + "\u{00b0}C";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: bed-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: bed-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            bed-plus-touch := TouchArea {
+                                clicked => { root.set-bed-temp(root.bed-target + 10); }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                // ── Material Presets ──
+                Label {
+                    text: "Presets";
+                    muted: true;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+
+                    Button {
+                        label: "PLA";
+                        clicked => {
+                            root.set-extruder-temp(220);
+                            root.set-bed-temp(60);
+                        }
+                    }
+
+                    Button {
+                        label: "PETG";
+                        clicked => {
+                            root.set-extruder-temp(250);
+                            root.set-bed-temp(80);
+                        }
+                    }
+
+                    Button {
+                        label: "ABS";
+                        clicked => {
+                            root.set-extruder-temp(260);
+                            root.set-bed-temp(100);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Motion / Axes ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Motion";
+                    heading: true;
+                }
+
+                // ── Speed Selector ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+
+                    Button {
+                        label: "Slow";
+                        clicked => { root.set-speed-slow(); }
+                    }
+
+                    Button {
+                        label: "Medium";
+                        clicked => { root.set-speed-medium(); }
+                    }
+
+                    Button {
+                        label: "Fast";
+                        primary: true;
+                        clicked => { root.set-speed-fast(); }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                // ── Homing ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+
+                    Button {
+                        label: "Home All";
+                        primary: true;
+                        clicked => { root.home-all(); }
+                    }
+
+                    Button {
+                        label: "Home X";
+                        clicked => { root.home-x(); }
+                    }
+
+                    Button {
+                        label: "Home Y";
+                        clicked => { root.home-y(); }
+                    }
+
+                    Button {
+                        label: "Home Z";
+                        clicked => { root.home-z(); }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                // ── X Axis ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "X: " + root.pos-x;
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: x-10-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: x-10-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            x-10-neg-touch := TouchArea {
+                                clicked => { root.move-x-10-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: x-1-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: x-1-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            x-1-neg-touch := TouchArea {
+                                clicked => { root.move-x-1-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: x-1-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: x-1-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            x-1-pos-touch := TouchArea {
+                                clicked => { root.move-x-1-pos(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: x-10-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: x-10-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            x-10-pos-touch := TouchArea {
+                                clicked => { root.move-x-10-pos(); }
+                            }
+                        }
+                    }
+                }
+
+                // ── Y Axis ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "Y: " + root.pos-y;
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: y-10-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: y-10-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            y-10-neg-touch := TouchArea {
+                                clicked => { root.move-y-10-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: y-1-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: y-1-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            y-1-neg-touch := TouchArea {
+                                clicked => { root.move-y-1-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: y-1-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: y-1-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            y-1-pos-touch := TouchArea {
+                                clicked => { root.move-y-1-pos(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: y-10-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: y-10-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            y-10-pos-touch := TouchArea {
+                                clicked => { root.move-y-10-pos(); }
+                            }
+                        }
+                    }
+                }
+
+                // ── Z Axis ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "Z: " + root.pos-z;
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-10-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-10-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-10-neg-touch := TouchArea {
+                                clicked => { root.move-z-10-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-1-neg-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-1-neg-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-1-neg-touch := TouchArea {
+                                clicked => { root.move-z-1-neg(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-1-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+1";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-1-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-1-pos-touch := TouchArea {
+                                clicked => { root.move-z-1-pos(); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-10-pos-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+10";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-sm;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-10-pos-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-10-pos-touch := TouchArea {
+                                clicked => { root.move-z-10-pos(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── LED Control ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "LED";
+                    heading: true;
+                }
+
+                    // ── LED On/Off Toggle ──
+                    HorizontalLayout {
+                        spacing: Theme.spacing-sm;
+                        alignment: space-between;
+
+                        Label {
+                            text: "Chamber Light";
+                            muted: true;
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 24px;
+
+                            Toggle {
+                                active <=> root.led-active;
+                            }
+
+                            led-toggle-touch := TouchArea {
+                                clicked => { root.toggle-led(); }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.border-default;
+                    }
+                // ── Brightness Control ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "Brightness:";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: led-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: led-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            led-minus-touch := TouchArea {
+                                clicked => { root.set-led-brightness(max(0, root.led-brightness - 10)); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.led-brightness + "%";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: led-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: led-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            led-plus-touch := TouchArea {
+                                clicked => { root.set-led-brightness(min(100, root.led-brightness + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

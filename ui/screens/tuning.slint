@@ -1,0 +1,466 @@
+import { Theme } from "../theme.slint";
+import { Card } from "../components/card.slint";
+import { Label } from "../components/label.slint";
+
+export component TuningScreen inherits Rectangle {
+    // ── Properties ──
+    in-out property <int> speed-multiplier: 100;
+    in-out property <int> flow-rate: 100;
+    in-out property <float> z-offset: 0.0;
+    in-out property <float> pressure-advance: 0.0;
+    in-out property <int> max-velocity: 300;
+    in-out property <int> max-acceleration: 3000;
+    in-out property <float> square-corner-velocity: 5.0;
+
+    // ── Callbacks ──
+    callback set-speed-multiplier(int);
+    callback set-flow-rate(int);
+    callback set-z-offset-fine(float);
+    callback set-pressure-advance(float);
+    callback set-max-velocity(int);
+    callback set-max-acceleration(int);
+    callback set-square-corner-velocity(float);
+
+    // ── Layout ──
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+        padding: Theme.spacing-md;
+
+        // ── Speed Multiplier Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Speed Multiplier";
+                    heading: true;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "M220";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: speed-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: speed-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            speed-minus-touch := TouchArea {
+                                clicked => { root.set-speed-multiplier(max(50, root.speed-multiplier - 10)); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.speed-multiplier + "%";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: speed-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: speed-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            speed-plus-touch := TouchArea {
+                                clicked => { root.set-speed-multiplier(min(200, root.speed-multiplier + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Flow Rate Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Flow Rate";
+                    heading: true;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "M221";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: flow-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: flow-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            flow-minus-touch := TouchArea {
+                                clicked => { root.set-flow-rate(max(50, root.flow-rate - 5)); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.flow-rate + "%";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: flow-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: flow-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            flow-plus-touch := TouchArea {
+                                clicked => { root.set-flow-rate(min(200, root.flow-rate + 5)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Z-Offset Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label {
+                    text: "Z-Offset Fine Tuning";
+                    heading: true;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+
+                    Label {
+                        text: "SET_GCODE_OFFSET";
+                        muted: true;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-minus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "-";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-minus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-minus-touch := TouchArea {
+                                clicked => { root.set-z-offset-fine(root.z-offset - 0.05); }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+
+                            Text {
+                                text: root.z-offset + "mm";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-md;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: z-plus-touch.has-hover
+                                ? Theme.bg-tertiary
+                                : Theme.bg-primary;
+
+                            Text {
+                                text: "+";
+                                color: Theme.text-primary;
+                                font-size: Theme.font-lg;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                visible: z-plus-touch.pressed;
+                                background: black.with-alpha(0.2);
+                                border-radius: Theme.radius-sm;
+                            }
+
+                            z-plus-touch := TouchArea {
+                                clicked => { root.set-z-offset-fine(root.z-offset + 0.05); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Pressure Advance Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label { text: "Pressure Advance"; heading: true; }
+
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "SET_PRESSURE_ADVANCE"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: pa-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: pa-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            pa-minus-touch := TouchArea { clicked => { root.set-pressure-advance(max(0, root.pressure-advance - 0.01)); } }
+                        }
+
+                        Rectangle {
+                            width: 80px; height: 32px; border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.pressure-advance; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: pa-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: pa-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            pa-plus-touch := TouchArea { clicked => { root.set-pressure-advance(min(1.0, root.pressure-advance + 0.01)); } }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Motion Limits Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+
+                Label { text: "Motion Limits"; heading: true; }
+
+                // ── Max Velocity ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Max Velocity (M203)"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: vm-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: vm-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            vm-minus-touch := TouchArea { clicked => { root.set-max-velocity(max(100, root.max-velocity - 100)); } }
+                        }
+
+                        Rectangle {
+                            width: 80px; height: 32px; border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.max-velocity + " mm/s"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: vm-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: vm-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            vm-plus-touch := TouchArea { clicked => { root.set-max-velocity(min(5000, root.max-velocity + 100)); } }
+                        }
+                    }
+                }
+
+                // ── Max Acceleration ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Max Accel (M201)"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: ac-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: ac-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            ac-minus-touch := TouchArea { clicked => { root.set-max-acceleration(max(100, root.max-acceleration - 500)); } }
+                        }
+
+                        Rectangle {
+                            width: 80px; height: 32px; border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.max-acceleration + " mm/s\u{00b2}"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: ac-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: ac-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            ac-plus-touch := TouchArea { clicked => { root.set-max-acceleration(min(50000, root.max-acceleration + 500)); } }
+                        }
+                    }
+                }
+
+                // ── Square Corner Velocity ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Corner Vel (VEL_LIM)"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: scv-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: scv-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            scv-minus-touch := TouchArea { clicked => { root.set-square-corner-velocity(max(1, root.square-corner-velocity - 1)); } }
+                        }
+
+                        Rectangle {
+                            width: 80px; height: 32px; border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.square-corner-velocity + " mm/s"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        Rectangle {
+                            width: 48px; height: 32px; border-radius: Theme.radius-sm;
+                            background: scv-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: scv-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            scv-plus-touch := TouchArea { clicked => { root.set-square-corner-velocity(min(20, root.square-corner-velocity + 1)); } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+import { Theme } from "../theme.slint";
+
+export component Label inherits Text {
+    // ── Variants ──
+    in property <bool> heading: false;
+    in property <bool> muted: false;
+
+    // ── Styling ──
+    color: root.muted ? Theme.text-muted : Theme.text-primary;
+    font-size: root.heading ? Theme.font-lg : Theme.font-md;
+}

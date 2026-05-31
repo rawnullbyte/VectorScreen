@@ -1,0 +1,322 @@
+import { Theme } from "../theme.slint";
+import { Card } from "../components/card.slint";
+import { Label } from "../components/label.slint";
+import { TemperatureGraph } from "../components/graph.slint";
+
+export component HomeScreen inherits Rectangle {
+    // ── Temperature Properties ──
+    in-out property <float> extruder-temp: 0.0;
+    in-out property <float> extruder-target: 0.0;
+    in-out property <float> bed-temp: 0.0;
+    in-out property <float> bed-target: 0.0;
+
+    // ── Status Properties ──
+    in-out property <bool> wifi-connected: false;
+    in-out property <bool> ethernet-connected: false;
+    in-out property <bool> camera-active: false;
+    in-out property <bool> motor-active: false;
+    in-out property <bool> servo-active: false;
+
+    // ── Print Progress Properties ──
+    in-out property <float> print-progress: 0.0;
+    in-out property <string> print-filename: "";
+    in-out property <string> print-state: "Idle";
+    in-out property <string> print-duration: "";
+
+    // ── Temperature History ──
+    in-out property <[float]> extruder-temp-history: [];
+    in-out property <[float]> bed-temp-history: [];
+
+    // ── Print Layer Count ──
+    in-out property <int> layer-count: 0;
+
+    // ── Styling ──
+    background: Theme.bg-primary;
+
+    VerticalLayout {
+        padding: Theme.spacing-lg;
+        spacing: Theme.spacing-lg;
+
+        // ── Title ──
+        Label {
+            text: "Home";
+            heading: true;
+        }
+
+        // ── Temperature Cards ──
+        HorizontalLayout {
+            spacing: Theme.spacing-md;
+            vertical-stretch: 1;
+
+            // ── Extruder Card ──
+            Card {
+                vertical-stretch: 1;
+
+                VerticalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    // ── Label ──
+                    Label {
+                        text: "Nozzle";
+                        muted: true;
+                    }
+
+                    // ── Current Temperature ──
+                    Text {
+                        text: round(root.extruder-temp) + " °C";
+                        color: root.extruder-temp >= 50 ? Theme.accent-red : Theme.text-primary;
+                        font-size: Theme.font-xl;
+                        font-weight: 700;
+                    }
+
+                    // ── Target Temperature ──
+                    Text {
+                        text: "Target " + round(root.extruder-target) + " °C";
+                        color: Theme.text-muted;
+                        font-size: Theme.font-sm;
+                    }
+                }
+            }
+
+            // ── Bed Card ──
+            Card {
+                vertical-stretch: 1;
+
+                VerticalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    // ── Label ──
+                    Label {
+                        text: "Bed";
+                        muted: true;
+                    }
+
+                    // ── Current Temperature ──
+                    Text {
+                        text: round(root.bed-temp) + " °C";
+                        color: root.bed-temp >= 40 ? Theme.accent-red : Theme.text-primary;
+                        font-size: Theme.font-xl;
+                        font-weight: 700;
+                    }
+
+                    // ── Target Temperature ──
+                    Text {
+                        text: "Target " + round(root.bed-target) + " °C";
+                        color: Theme.text-muted;
+                        font-size: Theme.font-sm;
+                    }
+                }
+            }
+        }
+
+        // ── Temperature Graphs ──
+        HorizontalLayout {
+            spacing: Theme.spacing-md;
+            vertical-stretch: 1;
+
+            TemperatureGraph {
+                data-points: root.extruder-temp-history;
+                min-y: 0;
+                max-y: 260;
+                line-color: Theme.accent-red;
+                title: "Nozzle";
+            }
+
+            TemperatureGraph {
+                data-points: root.bed-temp-history;
+                min-y: 0;
+                max-y: 100;
+                line-color: Theme.accent-orange;
+                title: "Bed";
+            }
+        }
+        // ── Print Progress Card ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+                alignment: start;
+
+                // ── Print State Indicator ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.print-state == "Printing" ? Theme.accent-green
+                            : root.print-state == "Paused" ? Theme.accent-orange
+                            : root.print-state == "Cancelled" ? Theme.accent-red
+                            : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: root.print-state;
+                        color: Theme.text-primary;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── Progress Bar ──
+                Rectangle {
+                    height: 20px;
+                    background: Theme.bg-tertiary;
+                    border-radius: Theme.radius-sm;
+                    clip: true;
+
+                    Rectangle {
+                        x: 0;
+                        y: 0;
+                        height: parent.height;
+                        width: parent.width * max(0, min(100, root.print-progress * 100)) / 100;
+                        background: Theme.accent-blue;
+                        border-radius: Theme.radius-sm;
+                    }
+
+                    Text {
+                        text: round(root.print-progress * 100) + "%";
+                        color: Theme.text-primary;
+                        font-size: Theme.font-sm;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── File Name ──
+                if (root.print-filename != ""): Text {
+                    text: root.print-filename;
+                    color: Theme.text-secondary;
+                    font-size: Theme.font-sm;
+                    overflow: elide;
+                }
+
+                // ── Duration ──
+                if (root.print-duration != ""): Text {
+                    text: root.print-duration;
+                    color: Theme.text-muted;
+                    font-size: Theme.font-xs;
+                }
+
+                // ── Layer Count ──
+                if (root.layer-count > 0): Text {
+                    text: "Layer " + root.layer-count;
+                    color: Theme.text-muted;
+                    font-size: Theme.font-xs;
+                }
+            }
+        }
+
+        // ── Status Bar ──
+        Rectangle {
+            height: 40px;
+            background: Theme.bg-secondary;
+            border-radius: Theme.radius-md;
+
+            HorizontalLayout {
+                padding-left: Theme.spacing-md;
+                padding-right: Theme.spacing-md;
+                spacing: Theme.spacing-lg;
+                alignment: start;
+
+                // ── WiFi Status ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.wifi-connected ? Theme.accent-green : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: "WiFi";
+                        color: root.wifi-connected ? Theme.text-primary : Theme.text-muted;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── Ethernet Status ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.ethernet-connected ? Theme.accent-green : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: "LAN";
+                        color: root.ethernet-connected ? Theme.text-primary : Theme.text-muted;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── Camera Status ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.camera-active ? Theme.accent-green : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: "Camera";
+                        color: root.camera-active ? Theme.text-primary : Theme.text-muted;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── Motor Status ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.motor-active ? Theme.accent-blue : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: "Motor";
+                        color: root.motor-active ? Theme.text-primary : Theme.text-muted;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // ── Servo Status ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: root.servo-active ? Theme.accent-orange : Theme.text-muted;
+                    }
+
+                    Text {
+                        text: "Servo";
+                        color: root.servo-active ? Theme.text-primary : Theme.text-muted;
+                        font-size: Theme.font-sm;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

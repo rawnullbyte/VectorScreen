@@ -1,0 +1,13 @@
+# Vector Screen Configuration
+# Copy to /etc/vector-screen.toml or set VECTOR_SCREEN_CONFIG env var
+
+[printer]
+# Moonraker IP address (env: MOONRAKER_HOST)
+ip = "127.0.0.1"
+
+# Moonraker WebSocket/HTTP port (env: MOONRAKER_PORT)
+port = 7125
+
+[logging]
+# Log level: debug, info, warn, error (env: VECTOR_SCREEN_LOG_LEVEL)
+level = "info"

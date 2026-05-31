@@ -1,0 +1,849 @@
+import { Theme } from "theme.slint";
+import { HomeScreen } from "screens/home.slint";
+import { ControlsScreen } from "screens/controls.slint";
+import { ConsoleScreen } from "screens/console.slint";
+import { TuningScreen } from "screens/tuning.slint";
+import { FansScreen } from "screens/fans.slint";
+import { FilesScreen } from "screens/files.slint";
+import { BedMeshScreen } from "screens/bed_mesh.slint";
+import { InputShaperScreen } from "screens/input_shaper.slint";
+import { TmcScreen } from "screens/tmc.slint";
+import { WifiScreen } from "screens/wifi.slint";
+import { TouchCalScreen } from "screens/touch_cal.slint";
+
+export component AppWindow inherits Window {
+    title: "Vector Screen";
+    preferred-width: 800px;
+    preferred-height: 480px;
+
+    // ── Navigation State ──
+    in-out property <bool> sidebar-expanded: false;
+    in-out property <int> active-screen: 0; // 0=Home, 1=Controls, 2=Console, 3=Tuning, 4=Fans, 5=Files, 6=BedMesh, 7=InputShaper, 8=TMC, 9=WiFi, 10=TouchCal
+
+    // ── Connection Status ──
+    in-out property <bool> ws-connected: false;
+
+    // ── Error Overlay ──
+    in-out property <bool> error-visible: false;
+    in-out property <string> error-message: "";
+
+    // ── Temperature Properties (HomeScreen + shared) ──
+    in-out property <float> extruder-temp: 0.0;
+    in-out property <float> extruder-target: 0.0;
+    in-out property <float> bed-temp: 0.0;
+    in-out property <float> bed-target: 0.0;
+
+    // ── Temperature History (HomeScreen graphs, capped at 120 elements in Rust) ──
+    in-out property <[float]> extruder-temp-history: [];
+    in-out property <[float]> bed-temp-history: [];
+
+    // ── Print Layer Count (HomeScreen) ──
+    in-out property <int> layer-count: 0;
+
+    // ── Print Progress Properties (HomeScreen) ──
+    in-out property <float> print-progress: 0.0;
+    in-out property <string> print-filename: "";
+    in-out property <string> print-state: "Idle";
+    in-out property <string> print-duration: "";
+
+    // ── Controls-Specific Properties ──
+    in-out property <string> controls-extruder-temp: "0";
+    in-out property <string> controls-bed-temp: "0";
+    in-out property <string> pos-x: "0.0";
+    in-out property <string> pos-y: "0.0";
+    in-out property <string> pos-z: "0.0";
+
+    // ── LED Properties ──
+    in-out property <bool> led-active: false;
+    in-out property <int> led-brightness: 50;
+
+    // ── Tuning Properties ──
+    in-out property <int> tuning-speed-multiplier: 100;
+    in-out property <int> tuning-flow-rate: 100;
+    in-out property <float> tuning-z-offset: 0.0;
+
+    // ── Pressure Advance & Motion Limits ──
+    in-out property <float> tuning-pressure-advance: 0.0;
+    in-out property <int> tuning-max-velocity: 300;
+    in-out property <int> tuning-max-acceleration: 3000;
+    in-out property <float> tuning-square-corner-velocity: 5.0;
+
+    // ── Fan Properties ──
+    in-out property <int> fan-part-cooling-speed: 0;
+    in-out property <int> fan-aux-fan-speed: 0;
+    in-out property <int> fan-controller-fan-speed: 0;
+    in-out property <int> fan-exhaust-fan-speed: 0;
+    in-out property <bool> fan-part-cooling-on: false;
+    in-out property <bool> fan-aux-fan-on: false;
+    in-out property <bool> fan-controller-fan-on: false;
+    in-out property <bool> fan-exhaust-fan-on: false;
+
+    // ── Files Screen Properties ──
+    in-out property <int> files-count: 0;
+
+    // ── Bed Mesh Properties ──
+    in-out property <int> bed-mesh-grid-size: 5;
+    in-out property <[float]> bed-mesh-values: [];
+    in-out property <float> bed-mesh-min: 0.0;
+    in-out property <float> bed-mesh-max: 0.0;
+    in-out property <float> bed-mesh-average: 0.0;
+
+    // ── Input Shaper Properties ──
+    in-out property <[float]> shaper-x-data: [];
+    in-out property <[float]> shaper-y-data: [];
+    in-out property <[string]> shaper-freq-labels: [];
+    in-out property <string> shaper-type: "";
+    in-out property <float> shaper-freq: 0.0;
+
+    // ── TMC Properties ──
+    in-out property <float> tmc-x-current: 0.0;
+    in-out property <float> tmc-x-temp: 0.0;
+    in-out property <int> tmc-x-errors: 0;
+    in-out property <int> tmc-x-stallguard: 0;
+    in-out property <float> tmc-y-current: 0.0;
+    in-out property <float> tmc-y-temp: 0.0;
+    in-out property <int> tmc-y-errors: 0;
+    in-out property <int> tmc-y-stallguard: 0;
+    in-out property <float> tmc-z-current: 0.0;
+    in-out property <float> tmc-z-temp: 0.0;
+    in-out property <int> tmc-z-errors: 0;
+    in-out property <int> tmc-z-stallguard: 0;
+
+    // ── WiFi Properties ──
+    in-out property <bool> wifi-connected: false;
+    in-out property <string> wifi-current-ssid: "";
+    in-out property <string> wifi-current-ip: "";
+
+    // ── Touch Cal Properties ──
+    in-out property <bool> touch-cal-active: false;
+    // ── Console Properties ──
+    in-out property <string> console-command: "";
+    in-out property <string> console-response: "";
+
+    // ── Callbacks ──
+    callback emergency-stop();
+    callback load-filament();
+    callback unload-filament();
+    callback set-extruder-temp(float);
+    callback set-bed-temp(float);
+    callback home-all();
+    callback home-x();
+    callback home-y();
+    callback home-z();
+    callback set-speed-slow();
+    callback set-speed-medium();
+    callback set-speed-fast();
+    callback move-x-10-neg();
+    callback move-x-1-neg();
+    callback move-x-1-pos();
+    callback move-x-10-pos();
+    callback move-y-10-neg();
+    callback move-y-1-neg();
+    callback move-y-1-pos();
+    callback move-y-10-pos();
+    callback move-z-10-neg();
+    callback move-z-1-neg();
+    callback move-z-1-pos();
+    callback move-z-10-pos();
+    callback toggle-led();
+    callback set-led-brightness(int);
+    callback dismiss-error();
+
+    // ── Console Callbacks ──
+    callback console-append-char(string);
+    callback console-backspace();
+    callback console-send();
+    callback console-clear();
+    callback console-history-up();
+    callback console-history-down();
+
+    // ── Tuning Callbacks ──
+    callback set-tuning-speed-multiplier(int);
+    callback set-tuning-flow-rate(int);
+    callback set-tuning-z-offset-fine(float);
+
+    // ── Pressure Advance & Motion Limits Callbacks ──
+    callback set-tuning-pressure-advance(float);
+    callback set-tuning-max-velocity(int);
+    callback set-tuning-max-acceleration(int);
+callback set-tuning-square-corner-velocity(float);
+
+    // ── Fan Callbacks ──
+    callback toggle-fan-part-cooling();
+    callback set-fan-part-cooling-speed(int);
+    callback toggle-fan-aux-fan();
+    callback set-fan-aux-fan-speed(int);
+    callback toggle-fan-controller-fan();
+    callback set-fan-controller-fan-speed(int);
+    callback toggle-fan-exhaust-fan();
+    callback set-fan-exhaust-fan-speed(int);
+    // ── Files Callbacks ──
+    callback refresh-files();
+    callback start-print(string);
+    callback delete-file(string);
+
+    // ── Bed Mesh Callbacks ──
+    callback calibrate-mesh();
+
+    // ── Input Shaper Callbacks ──
+    callback run-shaper-calibration();
+
+    // ── WiFi Callbacks ──
+    callback refresh-wifi-networks();
+    callback disconnect-wifi();
+    callback connect-wifi(string, string);
+
+    // ── Touch Cal Callbacks ──
+    callback start-touch-cal();
+
+    // ── Sidebar Width ──
+    property <length> sidebar-width: root.sidebar-expanded ? 200px : 60px;
+
+    HorizontalLayout {
+        // ── Sidebar ──
+        Rectangle {
+            width: root.sidebar-width;
+            background: Theme.bg-secondary;
+            border-width: 1px;
+            border-color: Theme.border-default;
+
+            VerticalLayout {
+                padding: Theme.spacing-sm;
+                spacing: Theme.spacing-xs;
+
+                // ── Toggle Button ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: touch-toggle.has-hover ? Theme.bg-tertiary : transparent;
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: root.sidebar-expanded ? "◀" : "▶";
+                            color: Theme.text-secondary;
+                            font-size: Theme.font-md;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Menu";
+                            color: Theme.text-secondary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-toggle := TouchArea {
+                        clicked => { root.sidebar-expanded = !root.sidebar-expanded; }
+                    }
+                }
+
+                // ── Separator ──
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border-default;
+                }
+
+                // ── Home Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 0
+                        ? (touch-home.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-home.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "⌂";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Home";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-home := TouchArea {
+                        clicked => { root.active-screen = 0; }
+                    }
+                }
+
+                // ── Controls Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 1
+                        ? (touch-controls.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-controls.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "⚙";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Controls";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-controls := TouchArea {
+                        clicked => { root.active-screen = 1; }
+                    }
+                }
+
+                // ── Console Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 2
+                        ? (touch-console.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-console.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: ">_";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Console";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-console := TouchArea {
+                        clicked => { root.active-screen = 2; }
+                    }
+                }
+
+                // ── Tuning Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 3
+                        ? (touch-tuning.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-tuning.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f527}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Tuning";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-tuning := TouchArea {
+                        clicked => { root.active-screen = 3; }
+                    }
+                }
+
+                // ── Fans Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 4
+                        ? (touch-fans.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-fans.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f4a8}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Fans";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-fans := TouchArea {
+                        clicked => { root.active-screen = 4; }
+                    }
+                }
+                // ── Files Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 5
+                        ? (touch-files.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-files.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f4c1}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Files";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-files := TouchArea {
+                        clicked => { root.active-screen = 5; }
+                    }
+                }
+
+                // ── Bed Mesh Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 6
+                        ? (touch-bed-mesh.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-bed-mesh.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f5fa}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Bed Mesh";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-bed-mesh := TouchArea {
+                        clicked => { root.active-screen = 6; }
+                    }
+                }
+
+                // ── Input Shaper Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 7
+                        ? (touch-input-shaper.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-input-shaper.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f4ca}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Input Shaper";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-input-shaper := TouchArea {
+                        clicked => { root.active-screen = 7; }
+                    }
+                }
+
+                // ── TMC Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 8
+                        ? (touch-tmc.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-tmc.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{26a1}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "TMC";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-tmc := TouchArea {
+                        clicked => { root.active-screen = 8; }
+                    }
+                }
+
+                // ── Wi-Fi Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 9
+                        ? (touch-wifi.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-wifi.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f4f6}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Wi-Fi";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-wifi := TouchArea {
+                        clicked => { root.active-screen = 9; }
+                    }
+                }
+
+                // ── Touch Cal Nav ──
+                Rectangle {
+                    height: 48px;
+                    border-radius: Theme.radius-md;
+                    background: root.active-screen == 10
+                        ? (touch-touch-cal.has-hover ? Theme.accent-blue.with-alpha(0.9) : Theme.accent-blue)
+                        : (touch-touch-cal.has-hover ? Theme.bg-tertiary : transparent);
+
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Text {
+                            text: "\u{1f4cb}";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-lg;
+                            vertical-alignment: center;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: "Touch Cal";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    touch-touch-cal := TouchArea {
+                        clicked => { root.active-screen = 10; }
+                    }
+                }
+
+
+                // ── Spacer ──
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+
+                // ── Connection Status ──
+                Rectangle {
+                    height: 40px;
+                    border-radius: Theme.radius-md;
+                    background: touch-toggle.has-hover ? Theme.bg-tertiary : transparent;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: Theme.spacing-xs;
+
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: root.ws-connected ? Theme.accent-green : Theme.accent-red;
+                        }
+
+                        if (root.sidebar-expanded): Text {
+                            text: root.ws-connected ? "Connected" : "Disconnected";
+                            color: root.ws-connected ? Theme.accent-green : Theme.accent-red;
+                            font-size: Theme.font-sm;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Content Area ──
+        Rectangle {
+            background: Theme.bg-primary;
+            clip: true;
+
+            VerticalLayout {
+                padding: Theme.spacing-lg;
+                spacing: Theme.spacing-md;
+
+                if (root.active-screen == 0): HomeScreen {
+                    extruder-temp: root.extruder-temp;
+                    extruder-target: root.extruder-target;
+                    bed-temp: root.bed-temp;
+                    bed-target: root.bed-target;
+                    print-progress: root.print-progress;
+                    print-filename: root.print-filename;
+                    print-state: root.print-state;
+                    print-duration: root.print-duration;
+                    extruder-temp-history: root.extruder-temp-history;
+                    bed-temp-history: root.bed-temp-history;
+                    layer-count: root.layer-count;
+                }
+
+                if (root.active-screen == 1): ControlsScreen {
+                    extruder-temp: root.controls-extruder-temp;
+                    extruder-target: root.extruder-target;
+                    bed-temp: root.controls-bed-temp;
+                    bed-target: root.bed-target;
+                    pos-x: root.pos-x;
+                    pos-y: root.pos-y;
+                    pos-z: root.pos-z;
+                    led-active <=> root.led-active;
+                    led-brightness <=> root.led-brightness;
+
+                    emergency-stop => { root.emergency-stop(); }
+                    load-filament => { root.load-filament(); }
+                    unload-filament => { root.unload-filament(); }
+                    set-extruder-temp(t) => { root.set-extruder-temp(t); }
+                    set-bed-temp(t) => { root.set-bed-temp(t); }
+                    home-all => { root.home-all(); }
+                    home-x => { root.home-x(); }
+                    home-y => { root.home-y(); }
+                    home-z => { root.home-z(); }
+                    set-speed-slow => { root.set-speed-slow(); }
+                    set-speed-medium => { root.set-speed-medium(); }
+                    set-speed-fast => { root.set-speed-fast(); }
+                    move-x-10-neg => { root.move-x-10-neg(); }
+                    move-x-1-neg => { root.move-x-1-neg(); }
+                    move-x-1-pos => { root.move-x-1-pos(); }
+                    move-x-10-pos => { root.move-x-10-pos(); }
+                    move-y-10-neg => { root.move-y-10-neg(); }
+                    move-y-1-neg => { root.move-y-1-neg(); }
+                    move-y-1-pos => { root.move-y-1-pos(); }
+                    move-y-10-pos => { root.move-y-10-pos(); }
+                    move-z-10-neg => { root.move-z-10-neg(); }
+                    move-z-1-neg => { root.move-z-1-neg(); }
+                    move-z-1-pos => { root.move-z-1-pos(); }
+                    move-z-10-pos => { root.move-z-10-pos(); }
+                    toggle-led => { root.toggle-led(); }
+                    set-led-brightness(b) => { root.set-led-brightness(b); }
+                }
+
+                if (root.active-screen == 2): ConsoleScreen {
+                    command-input: root.console-command;
+                    response-text: root.console-response;
+
+                    append-char(c) => { root.console-append-char(c); }
+                    do-backspace => { root.console-backspace(); }
+                    do-send => { root.console-send(); }
+                    do-clear => { root.console-clear(); }
+                    history-up => { root.console-history-up(); }
+                    history-down => { root.console-history-down(); }
+                }
+
+                if (root.active-screen == 3): TuningScreen {
+                    speed-multiplier <=> root.tuning-speed-multiplier;
+                    flow-rate <=> root.tuning-flow-rate;
+                    z-offset <=> root.tuning-z-offset;
+                    pressure-advance <=> root.tuning-pressure-advance;
+                    max-velocity <=> root.tuning-max-velocity;
+                    max-acceleration <=> root.tuning-max-acceleration;
+                    square-corner-velocity <=> root.tuning-square-corner-velocity;
+
+                    set-speed-multiplier(v) => { root.set-tuning-speed-multiplier(v); }
+                    set-flow-rate(v) => { root.set-tuning-flow-rate(v); }
+                    set-z-offset-fine(v) => { root.set-tuning-z-offset-fine(v); }
+                    set-pressure-advance(v) => { root.set-tuning-pressure-advance(v); }
+                    set-max-velocity(v) => { root.set-tuning-max-velocity(v); }
+                    set-max-acceleration(v) => { root.set-tuning-max-acceleration(v); }
+                    set-square-corner-velocity(v) => { root.set-tuning-square-corner-velocity(v); }
+                }
+
+                if (root.active-screen == 4): FansScreen {
+                    part-cooling-speed <=> root.fan-part-cooling-speed;
+                    aux-fan-speed <=> root.fan-aux-fan-speed;
+                    controller-fan-speed <=> root.fan-controller-fan-speed;
+                    exhaust-fan-speed <=> root.fan-exhaust-fan-speed;
+                    part-cooling-on <=> root.fan-part-cooling-on;
+                    aux-fan-on <=> root.fan-aux-fan-on;
+                    controller-fan-on <=> root.fan-controller-fan-on;
+                    exhaust-fan-on <=> root.fan-exhaust-fan-on;
+
+                    toggle-part-cooling => { root.toggle-fan-part-cooling(); }
+                    set-part-cooling-speed(v) => { root.set-fan-part-cooling-speed(v); }
+                    toggle-aux-fan => { root.toggle-fan-aux-fan(); }
+                    set-aux-fan-speed(v) => { root.set-fan-aux-fan-speed(v); }
+                    toggle-controller-fan => { root.toggle-fan-controller-fan(); }
+                    set-controller-fan-speed(v) => { root.set-fan-controller-fan-speed(v); }
+                    toggle-exhaust-fan => { root.toggle-fan-exhaust-fan(); }
+                    set-exhaust-fan-speed(v) => { root.set-fan-exhaust-fan-speed(v); }
+                }
+                if (root.active-screen == 5): FilesScreen {
+                    file-count: root.files-count;
+                    refresh-files => { root.refresh-files(); }
+                    start-print(path) => { root.start-print(path); }
+                    delete-file(path) => { root.delete-file(path); }
+                }
+
+                if (root.active-screen == 6): BedMeshScreen {
+                    grid-size: root.bed-mesh-grid-size;
+                    mesh-values: root.bed-mesh-values;
+                    mesh-min: root.bed-mesh-min;
+                    mesh-max: root.bed-mesh-max;
+                    mesh-average: root.bed-mesh-average;
+                    calibrate-mesh => { root.calibrate-mesh(); }
+                }
+
+                if (root.active-screen == 7): InputShaperScreen {
+                    x-freq-data: root.shaper-x-data;
+                    y-freq-data: root.shaper-y-data;
+                    freq-labels: root.shaper-freq-labels;
+                    shaper-type: root.shaper-type;
+                    shaper-freq: root.shaper-freq;
+                    run-calibration => { root.run-shaper-calibration(); }
+                }
+
+                if (root.active-screen == 8): TmcScreen {
+                    x-current: root.tmc-x-current;
+                    x-temp: root.tmc-x-temp;
+                    x-errors: root.tmc-x-errors;
+                    x-stallguard: root.tmc-x-stallguard;
+                    y-current: root.tmc-y-current;
+                    y-temp: root.tmc-y-temp;
+                    y-errors: root.tmc-y-errors;
+                    y-stallguard: root.tmc-y-stallguard;
+                    z-current: root.tmc-z-current;
+                    z-temp: root.tmc-z-temp;
+                    z-errors: root.tmc-z-errors;
+                    z-stallguard: root.tmc-z-stallguard;
+                }
+
+                if (root.active-screen == 9): WifiScreen {
+                    connected: root.wifi-connected;
+                    current-ssid: root.wifi-current-ssid;
+                    current-ip: root.wifi-current-ip;
+                    refresh-networks => { root.refresh-wifi-networks(); }
+                    disconnect-wifi => { root.disconnect-wifi(); }
+                    connect-wifi(ssid, pass) => { root.connect-wifi(ssid, pass); }
+                }
+
+                if (root.active-screen == 10): TouchCalScreen { }
+
+            }
+        }
+    }
+
+    // ── Error Overlay ──
+    if (root.error-visible): Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: black.with-alpha(0.7);
+
+        VerticalLayout {
+            alignment: center;
+
+            Rectangle {
+                width: 400px;
+                background: Theme.bg-secondary;
+                border-radius: Theme.radius-lg;
+                border-width: 1px;
+                border-color: Theme.accent-red;
+
+                VerticalLayout {
+                    padding: Theme.spacing-lg;
+                    spacing: Theme.spacing-md;
+                    alignment: center;
+
+                    Text {
+                        text: "Error";
+                        color: Theme.accent-red;
+                        font-size: Theme.font-xl;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+
+                    Text {
+                        text: root.error-message;
+                        color: Theme.text-primary;
+                        font-size: Theme.font-md;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+
+                    Rectangle {
+                        height: 40px;
+                        border-radius: Theme.radius-md;
+                        background: error-close-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+
+                        Text {
+                            text: "Dismiss";
+                            color: Theme.text-primary;
+                            font-size: Theme.font-md;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        error-close-touch := TouchArea {
+                            clicked => { root.dismiss-error(); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

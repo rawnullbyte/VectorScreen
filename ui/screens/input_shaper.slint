@@ -1,0 +1,34 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+import { Button } from "../components/button.slint";
+
+export component InputShaperScreen {
+    in property <[float]> x-freq-data: [];
+    in property <[float]> y-freq-data: [];
+    in property <[string]> freq-labels: [];
+    in property <string> shaper-type: "";
+    in property <float> shaper-freq: 0.0;
+
+    callback run-calibration();
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "Input Shaper";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: "Shaper: " + shaper-type + " @ " + shaper-freq + " Hz";
+            font-size: Theme.font-md;
+            color: Theme.text-secondary;
+        }
+
+        Button {
+            label: "Run Calibration";
+            clicked => { root.run-calibration(); }
+        }
+    }
+}

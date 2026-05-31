@@ -1,0 +1,47 @@
+import { VerticalBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Button } from "components/button.slint";
+import { Card } from "components/card.slint";
+import { Toggle } from "components/toggle.slint";
+import { Label } from "components/label.slint";
+import { HomeScreen } from "screens/home.slint";
+import { ControlsScreen } from "screens/controls.slint";
+
+export component MainWindow inherits Window {
+    title: "Vector Screen";
+    preferred-width: 800px;
+    preferred-height: 480px;
+
+    // ── Screen Navigation ──
+    in-out property <int> current-screen: 0;
+
+    // ── Home Screen Properties ──
+    in-out property <float> extruder-temp <=> home-screen.extruder-temp;
+    in-out property <float> extruder-target <=> home-screen.extruder-target;
+    in-out property <float> bed-temp <=> home-screen.bed-temp;
+    in-out property <float> bed-target <=> home-screen.bed-target;
+    in-out property <bool> wifi-connected <=> home-screen.wifi-connected;
+    in-out property <bool> ethernet-connected <=> home-screen.ethernet-connected;
+    in-out property <bool> camera-active <=> home-screen.camera-active;
+    in-out property <bool> motor-active <=> home-screen.motor-active;
+    in-out property <bool> servo-active <=> home-screen.servo-active;
+
+    // ── Controls Screen Properties ──
+    in-out property <string> controls-extruder-temp <=> controls-screen.extruder-temp;
+
+    VerticalBox {
+        alignment: center;
+
+        home-screen := HomeScreen {
+            visible: root.current-screen == 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        controls-screen := ControlsScreen {
+            visible: root.current-screen == 1;
+            width: 100%;
+            height: 100%;
+        }
+    }
+}

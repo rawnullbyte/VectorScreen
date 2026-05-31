@@ -1,0 +1,45 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+import { Button } from "../components/button.slint";
+
+export component WifiScreen {
+    in property <bool> connected: false;
+    in property <string> current-ssid: "";
+    in property <string> current-ip: "";
+
+    callback refresh-networks();
+    callback disconnect-wifi();
+    callback connect-wifi(string, string);
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "Wi-Fi";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: connected ? "Connected: " + current-ssid : "Disconnected";
+            font-size: Theme.font-md;
+            color: Theme.text-secondary;
+        }
+
+        Label {
+            text: "IP: " + current-ip;
+            font-size: Theme.font-sm;
+            color: Theme.text-secondary;
+        }
+
+        Button {
+            label: "Refresh";
+            clicked => { root.refresh-networks(); }
+        }
+
+        Button {
+            label: "Disconnect";
+            clicked => { root.disconnect-wifi(); }
+        }
+    }
+}

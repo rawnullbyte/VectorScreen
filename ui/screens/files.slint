@@ -1,0 +1,33 @@
+import { Theme } from "../theme.slint";
+import { Button } from "../components/button.slint";
+import { Label } from "../components/label.slint";
+import { Card } from "../components/card.slint";
+
+export component FilesScreen {
+    in property <int> file-count: 0;
+
+    callback refresh-files();
+    callback start-print(string);
+    callback delete-file(string);
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "Files";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: "File count: " + file-count;
+            font-size: Theme.font-md;
+            color: Theme.text-secondary;
+        }
+
+        Button {
+            label: "Refresh";
+            clicked => { root.refresh-files(); }
+        }
+    }
+}

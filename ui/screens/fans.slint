@@ -1,0 +1,265 @@
+import { Theme } from "../theme.slint";
+import { Card } from "../components/card.slint";
+import { Label } from "../components/label.slint";
+import { Toggle } from "../components/toggle.slint";
+
+export component FansScreen inherits Rectangle {
+    in-out property <int> part-cooling-speed: 0;
+    in-out property <int> aux-fan-speed: 0;
+    in-out property <int> controller-fan-speed: 0;
+    in-out property <int> exhaust-fan-speed: 0;
+    in-out property <bool> part-cooling-on: false;
+    in-out property <bool> aux-fan-on: false;
+    in-out property <bool> controller-fan-on: false;
+    in-out property <bool> exhaust-fan-on: false;
+
+    callback toggle-part-cooling();
+    callback set-part-cooling-speed(int);
+    callback toggle-aux-fan();
+    callback set-aux-fan-speed(int);
+    callback toggle-controller-fan();
+    callback set-controller-fan-speed(int);
+    callback toggle-exhaust-fan();
+    callback set-exhaust-fan-speed(int);
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+        padding: Theme.spacing-md;
+
+        // ── Part Cooling Fan ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Part Cooling"; heading: true; }
+                    Rectangle {
+                        width: 48px;
+                        height: 24px;
+                        Toggle { active <=> root.part-cooling-on; }
+                        pc-toggle-touch := TouchArea {
+                            clicked => { root.toggle-part-cooling(); }
+                        }
+                    }
+                }
+                Rectangle { height: 1px; background: Theme.border-default; }
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Speed:"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: pc-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: pc-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            pc-minus-touch := TouchArea {
+                                clicked => { root.set-part-cooling-speed(max(0, root.part-cooling-speed - 10)); }
+                            }
+                        }
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.part-cooling-speed + "%"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: pc-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: pc-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            pc-plus-touch := TouchArea {
+                                clicked => { root.set-part-cooling-speed(min(100, root.part-cooling-speed + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Auxiliary Fan ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Auxiliary"; heading: true; }
+                    Rectangle {
+                        width: 48px;
+                        height: 24px;
+                        Toggle { active <=> root.aux-fan-on; }
+                        aux-toggle-touch := TouchArea {
+                            clicked => { root.toggle-aux-fan(); }
+                        }
+                    }
+                }
+                Rectangle { height: 1px; background: Theme.border-default; }
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Speed:"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: aux-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: aux-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            aux-minus-touch := TouchArea {
+                                clicked => { root.set-aux-fan-speed(max(0, root.aux-fan-speed - 10)); }
+                            }
+                        }
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.aux-fan-speed + "%"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: aux-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: aux-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            aux-plus-touch := TouchArea {
+                                clicked => { root.set-aux-fan-speed(min(100, root.aux-fan-speed + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Controller Fan ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Controller"; heading: true; }
+                    Rectangle {
+                        width: 48px;
+                        height: 24px;
+                        Toggle { active <=> root.controller-fan-on; }
+                        ctrl-toggle-touch := TouchArea {
+                            clicked => { root.toggle-controller-fan(); }
+                        }
+                    }
+                }
+                Rectangle { height: 1px; background: Theme.border-default; }
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Speed:"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: ctrl-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: ctrl-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            ctrl-minus-touch := TouchArea {
+                                clicked => { root.set-controller-fan-speed(max(0, root.controller-fan-speed - 10)); }
+                            }
+                        }
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.controller-fan-speed + "%"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: ctrl-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: ctrl-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            ctrl-plus-touch := TouchArea {
+                                clicked => { root.set-controller-fan-speed(min(100, root.controller-fan-speed + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Exhaust Fan ──
+        Card {
+            VerticalLayout {
+                spacing: Theme.spacing-sm;
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Exhaust"; heading: true; }
+                    Rectangle {
+                        width: 48px;
+                        height: 24px;
+                        Toggle { active <=> root.exhaust-fan-on; }
+                        exhaust-toggle-touch := TouchArea {
+                            clicked => { root.toggle-exhaust-fan(); }
+                        }
+                    }
+                }
+                Rectangle { height: 1px; background: Theme.border-default; }
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: space-between;
+                    Label { text: "Speed:"; muted: true; }
+                    HorizontalLayout {
+                        spacing: Theme.spacing-xs;
+                        alignment: end;
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: exhaust-minus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "-"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: exhaust-minus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            exhaust-minus-touch := TouchArea {
+                                clicked => { root.set-exhaust-fan-speed(max(0, root.exhaust-fan-speed - 10)); }
+                            }
+                        }
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: Theme.bg-primary;
+                            Text { text: root.exhaust-fan-speed + "%"; color: Theme.text-primary; font-size: Theme.font-md; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 48px;
+                            height: 32px;
+                            border-radius: Theme.radius-sm;
+                            background: exhaust-plus-touch.has-hover ? Theme.bg-tertiary : Theme.bg-primary;
+                            Text { text: "+"; color: Theme.text-primary; font-size: Theme.font-lg; horizontal-alignment: center; vertical-alignment: center; }
+                            Rectangle { visible: exhaust-plus-touch.pressed; background: black.with-alpha(0.2); border-radius: Theme.radius-sm; }
+                            exhaust-plus-touch := TouchArea {
+                                clicked => { root.set-exhaust-fan-speed(min(100, root.exhaust-fan-speed + 10)); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,53 @@
+import { Theme } from "../theme.slint";
+
+export component Button inherits Rectangle {
+    // ── Properties ──
+    in property <string> label: "";
+    in property <bool> active: true;
+    in property <bool> primary: false;
+    in property <bool> danger: false;
+    in property <bool> ghost: false;
+
+    // ── Callbacks ──
+    callback clicked();
+
+    // ── Internal State ──
+    property <bool> is-pressed: touch-area.pressed;
+
+    // ── Styling ──
+    height: 40px;
+    border-radius: Theme.radius-md;
+    background: touch-area.has-hover
+        ? (root.primary ? Theme.accent-blue.with-alpha(0.9)
+           : root.danger ? Theme.accent-red.with-alpha(0.9)
+           : Theme.bg-tertiary)
+        : (root.primary ? Theme.accent-blue
+           : root.danger ? Theme.accent-red
+           : root.ghost ? transparent
+           : Theme.bg-secondary);
+    border-width: root.ghost ? 1px : 0px;
+    border-color: Theme.border-default;
+    opacity: root.active ? 1.0 : 0.5;
+
+    // ── Label ──
+    label-text := Text {
+        text: root.label;
+        color: root.ghost ? Theme.text-secondary : Theme.text-primary;
+        font-size: Theme.font-md;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    // ── Touch Area ──
+    touch-area := TouchArea {
+        enabled: root.active;
+        clicked => { root.clicked(); }
+    }
+
+    // ── Pressed Feedback ──
+    Rectangle {
+        visible: is-pressed && !root.ghost;
+        background: black.with-alpha(0.15);
+        border-radius: Theme.radius-md;
+    }
+}

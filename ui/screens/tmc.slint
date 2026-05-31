@@ -1,0 +1,45 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+
+export component TmcScreen {
+    in property <float> x-current: 0.0;
+    in property <float> x-temp: 0.0;
+    in property <int> x-errors: 0;
+    in property <int> x-stallguard: 0;
+    in property <float> y-current: 0.0;
+    in property <float> y-temp: 0.0;
+    in property <int> y-errors: 0;
+    in property <int> y-stallguard: 0;
+    in property <float> z-current: 0.0;
+    in property <float> z-temp: 0.0;
+    in property <int> z-errors: 0;
+    in property <int> z-stallguard: 0;
+
+    VerticalLayout {
+        spacing: Theme.spacing-md;
+
+        Label {
+            text: "TMC Drivers";
+            font-size: Theme.font-xl;
+            color: Theme.text-primary;
+        }
+
+        Label {
+            text: "X: " + x-current + "mA " + x-temp + "°C";
+            font-size: Theme.font-sm;
+            color: Theme.text-secondary;
+        }
+
+        Label {
+            text: "Y: " + y-current + "mA " + y-temp + "°C";
+            font-size: Theme.font-sm;
+            color: Theme.text-secondary;
+        }
+
+        Label {
+            text: "Z: " + z-current + "mA " + z-temp + "°C";
+            font-size: Theme.font-sm;
+            color: Theme.text-secondary;
+        }
+    }
+}

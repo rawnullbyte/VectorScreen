@@ -1,0 +1,263 @@
+import { Theme } from "../theme.slint";
+import { Label } from "../components/label.slint";
+
+// ── Reusable Virtual Key ──
+component VKey inherits Rectangle {
+    in property <string> key-label: "";
+    in property <bool> wide: false;
+    in property <bool> accent: false;
+    callback pressed();
+
+    height: 36px;
+    min-width: root.wide ? 100px : 44px;
+    horizontal-stretch: root.wide ? 2 : 1;
+    border-radius: Theme.radius-sm;
+    background: vkey-touch.has-hover
+        ? (root.accent ? Theme.accent-blue.with-alpha(0.85) : Theme.bg-tertiary)
+        : (root.accent ? Theme.accent-blue : Theme.bg-tertiary);
+
+    Text {
+        text: root.key-label;
+        color: Theme.text-primary;
+        font-size: Theme.font-md;
+        font-weight: root.accent ? 700 : 400;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Rectangle {
+        visible: vkey-touch.pressed;
+        background: black.with-alpha(0.2);
+        border-radius: Theme.radius-sm;
+    }
+
+    vkey-touch := TouchArea {
+        clicked => { root.pressed(); }
+    }
+}
+
+// ── Console Screen ──
+export component ConsoleScreen inherits Rectangle {
+    // ── Properties ──
+    in-out property <string> command-input: "";
+    in-out property <string> response-text: "";
+
+    // ── Callbacks ──
+    callback append-char(string);
+    callback do-backspace();
+    callback do-send();
+    callback do-clear();
+    callback history-up();
+    callback history-down();
+
+    VerticalLayout {
+        spacing: Theme.spacing-sm;
+
+        // ── Command Input Bar ──
+        Rectangle {
+            height: 48px;
+            border-radius: Theme.radius-md;
+            background: Theme.bg-secondary;
+            border-width: 1px;
+            border-color: Theme.border-default;
+
+            HorizontalLayout {
+                padding-left: Theme.spacing-md;
+                padding-right: Theme.spacing-sm;
+                spacing: Theme.spacing-sm;
+
+                command-input-el := TextInput {
+                    text: root.command-input;
+                    color: Theme.text-primary;
+                    font-size: Theme.font-md;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                    selection-background-color: Theme.accent-blue;
+                    edited => {
+                        root.command-input = command-input-el.text;
+                    }
+                    accepted => {
+                        root.do-send();
+                    }
+                }
+
+                // ── Send Button ──
+                Rectangle {
+                    width: 72px;
+                    height: 36px;
+                    border-radius: Theme.radius-sm;
+                    background: send-touch.has-hover
+                        ? Theme.accent-blue.with-alpha(0.85)
+                        : Theme.accent-blue;
+
+                    Text {
+                        text: "Send";
+                        color: Theme.text-primary;
+                        font-size: Theme.font-sm;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        visible: send-touch.pressed;
+                        background: black.with-alpha(0.2);
+                        border-radius: Theme.radius-sm;
+                    }
+
+                    send-touch := TouchArea {
+                        clicked => { root.do-send(); }
+                    }
+                }
+            }
+
+            input-focus := TouchArea { }
+        }
+
+        // ── Response Area ──
+        Rectangle {
+            vertical-stretch: 1;
+            border-radius: Theme.radius-md;
+            background: Theme.bg-secondary;
+            border-width: 1px;
+            border-color: Theme.border-default;
+            clip: true;
+
+            Flickable {
+                viewport-height: resp-text.preferred-height + Theme.spacing-md * 2;
+
+                resp-text := Text {
+                    x: Theme.spacing-md;
+                    y: Theme.spacing-sm;
+                    width: parent.width - Theme.spacing-md * 2;
+                    text: root.response-text == "" ? "No responses yet" : root.response-text;
+                    color: root.response-text == "" ? Theme.text-muted : Theme.text-secondary;
+                    font-size: Theme.font-sm;
+                    wrap: word-wrap;
+                }
+            }
+        }
+
+        // ── Virtual Keyboard ──
+        Rectangle {
+            border-radius: Theme.radius-md;
+            background: Theme.bg-secondary;
+            border-width: 1px;
+            border-color: Theme.border-default;
+
+            VerticalLayout {
+                padding: Theme.spacing-sm;
+                spacing: Theme.spacing-xs;
+
+                // ── Row 1: Numbers ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    VKey { key-label: "1"; pressed => { root.append-char("1"); } }
+                    VKey { key-label: "2"; pressed => { root.append-char("2"); } }
+                    VKey { key-label: "3"; pressed => { root.append-char("3"); } }
+                    VKey { key-label: "4"; pressed => { root.append-char("4"); } }
+                    VKey { key-label: "5"; pressed => { root.append-char("5"); } }
+                    VKey { key-label: "6"; pressed => { root.append-char("6"); } }
+                    VKey { key-label: "7"; pressed => { root.append-char("7"); } }
+                    VKey { key-label: "8"; pressed => { root.append-char("8"); } }
+                    VKey { key-label: "9"; pressed => { root.append-char("9"); } }
+                    VKey { key-label: "0"; pressed => { root.append-char("0"); } }
+                }
+
+                // ── Row 2: QWERTY top ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    VKey { key-label: "Q"; pressed => { root.append-char("Q"); } }
+                    VKey { key-label: "W"; pressed => { root.append-char("W"); } }
+                    VKey { key-label: "E"; pressed => { root.append-char("E"); } }
+                    VKey { key-label: "R"; pressed => { root.append-char("R"); } }
+                    VKey { key-label: "T"; pressed => { root.append-char("T"); } }
+                    VKey { key-label: "Y"; pressed => { root.append-char("Y"); } }
+                    VKey { key-label: "U"; pressed => { root.append-char("U"); } }
+                    VKey { key-label: "I"; pressed => { root.append-char("I"); } }
+                    VKey { key-label: "O"; pressed => { root.append-char("O"); } }
+                    VKey { key-label: "P"; pressed => { root.append-char("P"); } }
+                }
+
+                // ── Row 3: QWERTY home ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+                    alignment: center;
+
+                    VKey { key-label: "A"; pressed => { root.append-char("A"); } }
+                    VKey { key-label: "S"; pressed => { root.append-char("S"); } }
+                    VKey { key-label: "D"; pressed => { root.append-char("D"); } }
+                    VKey { key-label: "F"; pressed => { root.append-char("F"); } }
+                    VKey { key-label: "G"; pressed => { root.append-char("G"); } }
+                    VKey { key-label: "H"; pressed => { root.append-char("H"); } }
+                    VKey { key-label: "J"; pressed => { root.append-char("J"); } }
+                    VKey { key-label: "K"; pressed => { root.append-char("K"); } }
+                    VKey { key-label: "L"; pressed => { root.append-char("L"); } }
+                }
+
+                // ── Row 4: QWERTY bottom ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+                    alignment: center;
+
+                    VKey { key-label: "Z"; pressed => { root.append-char("Z"); } }
+                    VKey { key-label: "X"; pressed => { root.append-char("X"); } }
+                    VKey { key-label: "C"; pressed => { root.append-char("C"); } }
+                    VKey { key-label: "V"; pressed => { root.append-char("V"); } }
+                    VKey { key-label: "B"; pressed => { root.append-char("B"); } }
+                    VKey { key-label: "N"; pressed => { root.append-char("N"); } }
+                    VKey { key-label: "M"; pressed => { root.append-char("M"); } }
+                }
+
+                // ── Row 5: Special keys ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    VKey {
+                        key-label: "SP";
+                        wide: true;
+                        pressed => { root.append-char(" "); }
+                    }
+
+                    VKey {
+                        key-label: "\u{232B}";
+                        wide: true;
+                        pressed => { root.do-backspace(); }
+                    }
+
+                    VKey {
+                        key-label: "\u{23CE}";
+                        wide: true;
+                        accent: true;
+                        pressed => { root.do-send(); }
+                    }
+
+                    VKey {
+                        key-label: "CLR";
+                        wide: true;
+                        pressed => { root.do-clear(); }
+                    }
+                }
+
+                // ── Row 6: History navigation ──
+                HorizontalLayout {
+                    spacing: Theme.spacing-xs;
+
+                    VKey {
+                        key-label: "\u{25B2} Prev";
+                        wide: true;
+                        pressed => { root.history-up(); }
+                    }
+
+                    VKey {
+                        key-label: "\u{25BC} Next";
+                        wide: true;
+                        pressed => { root.history-down(); }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,16 @@
+import { Theme } from "../theme.slint";
+
+export component Card inherits Rectangle {
+    // ── Styling ──
+    background: Theme.bg-secondary;
+    border-radius: Theme.radius-lg;
+    border-width: 1px;
+    border-color: Theme.border-default;
+    clip: true;
+
+    // ── Content ──
+    VerticalLayout {
+        padding: Theme.spacing-md;
+        spacing: Theme.spacing-sm;
+    }
+}
