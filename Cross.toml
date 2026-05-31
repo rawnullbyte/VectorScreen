@@ -1,5 +1,5 @@
 [target.armv7-unknown-linux-musleabihf]
 pre-build = [
-    "apk add --no-cache eudev-dev libinput-dev libdrm-dev mesa-dev libxkbcommon-dev ttf-dejavu fontconfig",
+    "apt-get update && apt-get install -y libudev-dev libinput-dev libdrm-dev libgl1-mesa-dev libxkbcommon-dev fonts-dejavu fontconfig",
     "fc-cache -fv",
 ]

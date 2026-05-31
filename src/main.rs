@@ -18,6 +18,8 @@ use moonraker::MoonrakerConfig;
 use tokio::sync::mpsc;
 use ui::console::ConsoleState;
 use ui::motion::{MotionControl, MovementSpeed};
+use ui::led::LedControl;
+use ui::tuning::TuningControl;
 use app::update_ui;
 
 /// Commands from UI to backend.
@@ -122,6 +124,8 @@ async fn run_backend(
     let (_, dummy_rx) = mpsc::unbounded_channel();
     let mut notification_rx = std::mem::replace(&mut client.notification_rx, dummy_rx);
     let mut motion = MotionControl::new();
+    let mut led = LedControl::new();
+    let mut tuning = TuningControl::new();
 
     let mut objects = HashMap::new();
     objects.insert("extruder".to_string(), None);
@@ -156,7 +160,7 @@ async fn run_backend(
             }
             cmd = cmd_rx.recv() => {
                 match cmd {
-                    Some(c) => app::handle_command(c, &client, &weak_window, &mut motion).await,
+                    Some(c) => app::handle_command(c, &client, &weak_window, &mut motion, &mut led, &mut tuning).await,
                     None => break,
                 }
             }

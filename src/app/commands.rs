@@ -2,6 +2,8 @@ use crate::UiCommand;
 use crate::moonraker::MoonrakerClient;
 use crate::AppWindow;
 use crate::ui::motion::MotionControl;
+use crate::ui::led::LedControl;
+use crate::ui::tuning::TuningControl;
 
 use super::{update_positions, update_ui};
 
@@ -10,6 +12,8 @@ pub(crate) async fn handle_command(
     client: &MoonrakerClient,
     weak_window: &slint::Weak<AppWindow>,
     motion: &mut MotionControl,
+    led: &mut LedControl,
+    tuning: &mut TuningControl,
 ) {
     match cmd {
         UiCommand::EmergencyStop => {
@@ -31,13 +35,34 @@ pub(crate) async fn handle_command(
             motion.set_speed(speed);
         }
         UiCommand::ToggleLed => {
+            led.toggle();
+            let gcode = if led.is_on() {
+                led.led_on_gcode()
+            } else {
+                led.led_off_gcode()
+            };
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("LED command failed: {e}").into());
+                });
+            }
         }
-        UiCommand::SetLedBrightness(_b) => {
+        UiCommand::SetLedBrightness(b) => {
+            led.set_brightness(b);
+            let gcode = led.set_brightness_gcode();
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("LED brightness failed: {e}").into());
+                });
+            }
         }
         UiCommand::ConsoleSendGcode(gcode) => {
             handle_console_gcode(client, weak_window, &gcode).await;
         }
         UiCommand::RefreshFiles => {
+            tracing::info!("RefreshFiles command received");
         }
         UiCommand::StartPrint(path) => {
             if let Err(e) = client.send_gcode(&format!("PRINT_FILE FILENAME={}", path)).await {
@@ -47,7 +72,13 @@ pub(crate) async fn handle_command(
                 });
             }
         }
-        UiCommand::DeleteFile(_path) => {
+        UiCommand::DeleteFile(path) => {
+            if let Err(e) = client.send_gcode(&format!("DELETE_FILE FILENAME={}", path)).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Delete failed: {e}").into());
+                });
+            }
         }
         UiCommand::CalibrateMesh => {
             if let Err(e) = client.send_gcode("BED_MESH_CALIBRATE").await {
@@ -66,11 +97,74 @@ pub(crate) async fn handle_command(
             }
         }
         UiCommand::RefreshWifiNetworks => {
+            if let Err(e) = client.send_gcode("WIFI_SCAN").await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("WiFi scan failed: {e}").into());
+                });
+            }
         }
         UiCommand::DisconnectWifi => {
+            if let Err(e) = client.send_gcode("WIFI_DISCONNECT").await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("WiFi disconnect failed: {e}").into());
+                });
+            }
         }
         UiCommand::ConnectWifi { ssid, password } => {
-            let _ = (ssid, password);
+            let gcode = format!("WIFI_CONNECT SSID=\"{}\" PASSWORD=\"{}\"", ssid, password);
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("WiFi connect failed: {e}").into());
+                });
+            }
+        }
+        UiCommand::SetPressureAdvance(value) => {
+            tuning.pressure_advance = value;
+            let gcode = tuning.pressure_advance_gcode();
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Pressure advance failed: {e}").into());
+                });
+            }
+        }
+        UiCommand::SetMaxVelocity { x, y, z } => {
+            let gcode = format!("SET_VELOCITY_LIMIT VELOCITY={:.1}", x.max(y).max(z));
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Velocity limit failed: {e}").into());
+                });
+            }
+        }
+        UiCommand::SetMaxAcceleration { x, y, z } => {
+            let gcode = format!("SET_VELOCITY_LIMIT ACCEL={:.0}", x.max(y).max(z));
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Acceleration limit failed: {e}").into());
+                });
+            }
+        }
+        UiCommand::SetSquareCornerVelocity(value) => {
+            let gcode = format!("SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY={:.1}", value);
+            if let Err(e) = client.send_gcode(&gcode).await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Square corner velocity failed: {e}").into());
+                });
+            }
+        }
+        UiCommand::StartTouchCal => {
+            if let Err(e) = client.send_gcode("TOUCH_CALIBRATE").await {
+                update_ui(weak_window, move |w| {
+                    w.set_error_visible(true);
+                    w.set_error_message(format!("Touch calibration failed: {e}").into());
+                });
+            }
         }
     }
 }

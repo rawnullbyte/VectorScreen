@@ -22,6 +22,7 @@ pub(crate) fn wire_callbacks(
     wire_bed_mesh_callbacks(window, cmd_tx);
     wire_input_shaper_callbacks(window, cmd_tx);
     wire_wifi_callbacks(window, cmd_tx);
+    wire_touch_cal_callbacks(window, cmd_tx);
 }
 
 fn wire_home_callbacks(window: &AppWindow, cmd_tx: &mpsc::UnboundedSender<UiCommand>) {
@@ -227,6 +228,28 @@ fn wire_tuning_callbacks(window: &AppWindow, cmd_tx: &mpsc::UnboundedSender<UiCo
     window.on_set_tuning_z_offset_fine(move |value: f32| {
         let gcode = format!("SET_GCODE_OFFSET Z_ADJUST={:.3}", value);
         let _ = tx.send(UiCommand::SendGcode(gcode));
+    });
+
+    let tx = cmd_tx.clone();
+    window.on_set_tuning_pressure_advance(move |value: f32| {
+        let _ = tx.send(UiCommand::SetPressureAdvance(value as f64));
+    });
+
+    let tx = cmd_tx.clone();
+    window.on_set_tuning_max_velocity(move |value: i32| {
+        let v = value as f64;
+        let _ = tx.send(UiCommand::SetMaxVelocity { x: v, y: v, z: v });
+    });
+
+    let tx = cmd_tx.clone();
+    window.on_set_tuning_max_acceleration(move |value: i32| {
+        let a = value as f64;
+        let _ = tx.send(UiCommand::SetMaxAcceleration { x: a, y: a, z: a });
+    });
+
+    let tx = cmd_tx.clone();
+    window.on_set_tuning_square_corner_velocity(move |value: f32| {
+        let _ = tx.send(UiCommand::SetSquareCornerVelocity(value as f64));
     });
 }
 
@@ -463,5 +486,12 @@ fn wire_wifi_callbacks(window: &AppWindow, cmd_tx: &mpsc::UnboundedSender<UiComm
             ssid: ssid.to_string(),
             password: password.to_string(),
         });
+    });
+}
+
+fn wire_touch_cal_callbacks(window: &AppWindow, cmd_tx: &mpsc::UnboundedSender<UiCommand>) {
+    let tx = cmd_tx.clone();
+    window.on_start_touch_cal(move || {
+        let _ = tx.send(UiCommand::StartTouchCal);
     });
 }
