@@ -54,14 +54,26 @@ fn wire_controls_callbacks(window: &AppWindow, cmd_tx: &mpsc::UnboundedSender<Ui
 
     let tx = cmd_tx.clone();
     window.on_set_extruder_temp(move |temp: f32| {
-        let gcode = format!("M104 S{:.1}", temp);
-        let _ = tx.send(UiCommand::SendGcode(gcode));
+        match crate::klipper::gcode::format_set_extruder_temp(temp as f64) {
+            Ok(gcode) => {
+                let _ = tx.send(UiCommand::SendGcode(gcode));
+            }
+            Err(e) => {
+                tracing::warn!("Invalid extruder temp: {e}");
+            }
+        }
     });
 
     let tx = cmd_tx.clone();
     window.on_set_bed_temp(move |temp: f32| {
-        let gcode = format!("M140 S{:.1}", temp);
-        let _ = tx.send(UiCommand::SendGcode(gcode));
+        match crate::klipper::gcode::format_set_bed_temp(temp as f64) {
+            Ok(gcode) => {
+                let _ = tx.send(UiCommand::SendGcode(gcode));
+            }
+            Err(e) => {
+                tracing::warn!("Invalid bed temp: {e}");
+            }
+        }
     });
 
     let tx = cmd_tx.clone();
