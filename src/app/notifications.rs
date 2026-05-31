@@ -44,6 +44,9 @@ pub(crate) fn handle_notification(
                 w.set_error_message(msg.into());
             });
         }
+        Notification::KlippyReady => {
+            tracing::info!("Klipper ready");
+        }
         Notification::ConnectionState { connected } => {
             update_ui(weak_window, move |w| {
                 w.set_ws_connected(connected);
@@ -55,7 +58,22 @@ pub(crate) fn handle_notification(
                 }
             });
         }
-        _ => {}
+        Notification::KlippyShutdown => {
+            tracing::info!("Klipper ready");
+        }
+        Notification::KlippyShutdown => {
+            update_ui(weak_window, |w| {
+                w.set_ws_connected(false);
+                w.set_error_visible(true);
+                w.set_error_message("Klipper shutdown".into());
+            });
+        }
+        Notification::GcodeResponse(resp) => {
+            tracing::info!("G-code response: {}", resp);
+        }
+        Notification::Unknown { method, .. } => {
+            tracing::debug!("Unhandled notification: {}", method);
+        }
     }
 }
 

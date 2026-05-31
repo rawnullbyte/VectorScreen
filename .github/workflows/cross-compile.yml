@@ -40,6 +40,11 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build release binary for ARM
+        env:
+          PKG_CONFIG_ALLOW_CROSS: 1
+          PKG_CONFIG_SYSROOT_DIR: /
+          PKG_CONFIG_PATH: /usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/share/pkgconfig
+        run: cross build --release --target armv7-unknown-linux-musleabihf
         run: cross build --release --target armv7-unknown-linux-musleabihf
 
       - name: Upload ARM binary artifact
